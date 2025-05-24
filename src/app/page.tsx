@@ -1,12 +1,14 @@
+'use client';
+
 import React,{ useState, useEffect } from "react";
-import classes from '../css/Home.module.css';
-import { Link } from 'react-router-dom';
-import { Post } from '../types/index';
+import classes from '@/app/_styles/Home.module.css';
+import Link from 'next/link';
+import { Post } from '@/app/_types/PostsType';
 
 
 
 
-export const Home: React.FC = () => {
+export default function Home() {
   const [posts, setPots] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -38,7 +40,7 @@ export const Home: React.FC = () => {
           {posts.map((post) => {
             return (
               <li key={post.id} className={classes.list}>
-                <Link to={`/posts/${post.id}`} className={classes.link}>
+                <Link href={`/posts/${post.id}`} className={classes.link}>
                   <div className={classes.post}>
                     <div className={classes.postContent}>
                       <div className={classes.postInfo}>
@@ -67,4 +69,4 @@ export const Home: React.FC = () => {
       </div>
     </div>
   );
-}
+};
