@@ -1,5 +1,7 @@
+'use client';
+
 import React, { useState, ChangeEvent, FormEvent } from "react";
-import classes from '../css/Contact.module.css';
+import classes from '@/app/contact/Contact.module.css';
 
 // フォームデータの型
 type FormData = {
@@ -11,7 +13,7 @@ type FormData = {
 // バリデーションエラーの型
 type Errors = Partial<FormData>;
 
-export const Contact: React.FC = () => {
+export default function Contact() {
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
@@ -95,7 +97,7 @@ export const Contact: React.FC = () => {
   return (
     <div className={classes.contactForm}>
       <form onSubmit={handleSubmit}>
-        <h2>問い合わせフォーム</h2>
+        <h2 className={classes.title}>問い合わせフォーム</h2>
         <div>
 
           <div className={classes.formColumn}>
@@ -171,4 +173,3 @@ export const Contact: React.FC = () => {
     </div>
   );
 };
-
