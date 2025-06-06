@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import classes from '@/app/_styles/Detail.module.css';
-import { Post } from '@/app/_types/PostsType';
+import { MicroCmsPost } from '@/app/_types/PostsType';
 import Image from 'next/image';
 
 
@@ -12,18 +12,20 @@ const HomeDetail: React.FC = () => {
   const params = useParams();
   const id = params['id'];
 
-  const [post, setPost] = useState<Post | null>(null);
+  const [post, setPost] = useState<MicroCmsPost | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
 
   useEffect(() => {
     const fetcher = async () => {
-      if (!id) return;
-
       try {
-        const res = await fetch(`https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts/${id}`);
+        const res = await fetch(`https://1kt3z4pfn4.microcms.io/api/v1/posts/${id}`,{
+          headers: {
+            'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_API_KEY as string,
+          }
+        });
         const data = await res.json();
-        setPost(data.post);
+        setPost(data);
       } catch (error) {
         console.error('記事の取得に失敗:', error);
       } finally {
@@ -43,7 +45,7 @@ const HomeDetail: React.FC = () => {
       <div className={classes.post}>
         <div className={classes.postImage}>
           <Image
-            src={post.thumbnailUrl}
+            src={post.thumbnail.url}
             alt={post.title}
             height={400}
             width={800}
@@ -57,8 +59,8 @@ const HomeDetail: React.FC = () => {
             <div className={classes.postCategories}>
               {post.categories.map((category) => {
                 return (
-                  <div key={category} className={classes.postCategory}>
-                    {category}
+                  <div key={category.id} className={classes.postCategory}>
+                    {category.name}
                   </div>
                 )
               })}
@@ -73,4 +75,3 @@ const HomeDetail: React.FC = () => {
 };
 
 export default HomeDetail;
-

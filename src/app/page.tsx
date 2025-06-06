@@ -3,22 +3,26 @@
 import React,{ useState, useEffect } from "react";
 import classes from '@/app/_styles/Home.module.css';
 import Link from 'next/link';
-import { Post } from '@/app/_types/PostsType';
+import { MicroCmsPost } from '@/app/_types/PostsType';
 
 
 
 
 export default function Home() {
-  const [posts, setPots] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<MicroCmsPost[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const fetcher = async () => {
       try {
-        const res = await fetch(`https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts`);
+        const res = await fetch(`https://1kt3z4pfn4.microcms.io/api/v1/posts`,{
+          headers: {
+            'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_API_KEY as string,
+          }
+        });
         const data = await res.json();
-        console.log("取得記事:",data);
-        setPots(data.posts);
+        console.log("✅ APIレスポンス", data);
+        setPosts(data.contents);
       } catch (error) {
         console.error("記事一覧取得に失敗", error);
       }
@@ -50,8 +54,8 @@ export default function Home() {
                         <div className={classes.postCategories}>
                           {post.categories.map((category) => {
                             return (
-                              <div key={category} className={classes.postCategory}>
-                                {category}
+                              <div key={category.id} className={classes.postCategory}>
+                                {category.name}
                               </div>
                             );
                           })}
