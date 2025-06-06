@@ -1,4 +1,11 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  images: {
+    domains: ["placehold.jp"], 
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.microcms-assets.io' },
+    ],
+  },
+};
 
 export default nextConfig;

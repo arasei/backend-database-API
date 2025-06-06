@@ -1,0 +1,18 @@
+.header {
+  background-color: #333;
+  padding: 20px 25px;
+}
+
+.ul {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+  padding: 0;
+}
+
+.li {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+}
