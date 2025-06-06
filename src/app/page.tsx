@@ -3,7 +3,7 @@
 import React,{ useState, useEffect } from "react";
 import classes from '@/app/_styles/Home.module.css';
 import Link from 'next/link';
-import { Post,MicroCmsPost } from '@/app/_types/PostsType';
+import { MicroCmsPost } from '@/app/_types/PostsType';
 
 
 

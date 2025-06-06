@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import classes from '@/app/_styles/Detail.module.css';
-import { Post, MicroCmsPost } from '@/app/_types/PostsType';
+import { MicroCmsPost } from '@/app/_types/PostsType';
 import Image from 'next/image';
 
 
