@@ -21,11 +21,11 @@ export const GET = async (
   }
 };
 
-//管理者カテゴリー更新API
+//管理者　カテゴリー更新API
 interface UpdateCategoryRequestBody {
   name: string;
 }
-
+//管理者　カテゴリー更新API
 export const PUT = async (
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -48,7 +48,7 @@ export const PUT = async (
   }
 };
 
-//管理者カテゴリー削除API
+//管理者　カテゴリー削除API
 export const DELETE = async (
   request: NextRequest,
   { params }: { params: { id: string } }

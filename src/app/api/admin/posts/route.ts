@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 const prisma = new PrismaClient();
 
+
+//管理者　記事一覧取得API
 export const GET = async (request: NextRequest) => {
   try {
     const posts = await prisma.post.findMany({
@@ -38,6 +40,7 @@ interface CreatePostRequestBody {
 }
 
 // POSTという命名にすることで、POSTリクエストの時にこの関数が呼ばれる
+//管理者　記事新規作成API
 export const POST = async (request: NextRequest, context: any) => {
   try {
     // リクエストのbodyを取得

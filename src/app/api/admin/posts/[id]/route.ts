@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// 個別記事取得API
+// 管理者　個別記事取得API
 export const GET = async (
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -44,6 +44,7 @@ interface UpdatePostRequestBody {
 }
 
 // PUTという命名にすることで、PUTリクエストの時にこの関数が呼ばれる
+//管理者　記事更新API
 export const PUT = async (
   request: NextRequest,
   { params }: { params: { id: string } } // ここでリクエストパラメータを受け取る
