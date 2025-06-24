@@ -1,5 +1,7 @@
 "use client"; //クライアントサイドで実行
 
+
+//トップページで投稿記事一覧を表示する。
 import { useEffect, useState } from "react";
 import { ArticlesCard } from "./_components/ArticlesCard";
 import { Post } from "./_types/Post";
@@ -17,9 +19,15 @@ const Posts: React.FC = () => {
   useEffect(() => {
     const getApi = async () => {
       const res = await fetch("/api/admin/posts");//作成したAPIを呼び出す
-      const { posts } = await res.json();//postsの配列を取り出す
+      const { data } = await res.json();
       console.log(posts);
-      setPosts(posts);//投稿一覧をステートに保存
+      //postCategoriesからcategoryを抽出
+      const transformedPosts = data.posts.map((post: any) => ({
+        ...post,
+        //取得したデータからpost.postCategoriesをもとにcategories配列を作り直して整形。
+        categories: post.postCategories.map((pc: any) => pc.category),
+      }));
+      setPosts(transformedPosts);
       setIsLoading(false);//ローディング状態を解除
     };
     getApi();
@@ -36,7 +44,7 @@ const Posts: React.FC = () => {
     <div>
       {posts.map((post) => (
         //key={post.id}を指定してReactがリストの再描画を最適化できるようにする。
-        // 投稿データ(postオブジェクト)をArticlesCardに渡す
+        // 投稿データ(postオブジェクト)をArticlesCardに渡してリスト表示。
         <ArticlesCard key={post.id} post={post} /> 
       ))}
     </div>
