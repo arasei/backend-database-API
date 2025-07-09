@@ -1,77 +1,77 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import classes from '@/app/_styles/Detail.module.css';
-import { MicroCmsPost } from '@/app/_types/PostsType';
-import Image from 'next/image';
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation"; //next/navigationからuseParamsをインポートする
+import { ArticlesCardDetail } from "./_components/ArticlesCardDetail";
+import { Post } from "..//../_types/Post";
+import Image from "next/image"; //Imageコンポーネントをインポート
+import { supabase } from "@/utils/supabase";
 
+const PageDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>(); //useParamsを使用してURLパラメータ(例:/posts/3)から記事ID(例の場合「3」)を取得。
+  const [post, setPost] = useState<Post | null>(null); //postの状態管理
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<string>(""); //画像URLを保持
+  const [isLoading, setIsLoading] = useState<boolean>(true); //ローディング状態
 
-
-const HomeDetail: React.FC = () => {
-  const params = useParams();
-  const id = params['id'];
-
-  const [post, setPost] = useState<MicroCmsPost | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-
-
+  //記事データの取得(API経由)
   useEffect(() => {
-    const fetcher = async () => {
+    const fetchPageDetail = async () => {
+      setIsLoading(true); //ローディング開始、取得中はisLoadingをtrueにしてローディング表示
       try {
-        const res = await fetch(`https://1kt3z4pfn4.microcms.io/api/v1/posts/${id}`,{
-          headers: {
-            'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_API_KEY as string,
-          }
-        });
+        const res = await fetch(`/api/posts/${id}`); //APIから記事データを取得、idに基づいて/api/posts/:idにGETリクエスト
         const data = await res.json();
-        setPost(data);
+        console.log("確認", data);
+        setPost(data.post); //取得したデータをセット、ステートに保存
       } catch (error) {
-        console.error('記事の取得に失敗:', error);
+        console.error("記事取得エラー", error);
       } finally {
-        setLoading(false);
+        setIsLoading(false); //ローディング終了
       }
+    };
+    fetchPageDetail();
+  }, [id]); //IDが変わるたびに再実行
+  
+  //Supabaseから画像URLを取得
+  useEffect(() => {
+    if (!post?.thumbnailImageKey) return;//post.thumbnailImageKeyが存在する場合だけ下記の内容を実行
+    const fetcher = async () => {
+      const {
+        data: { publicUrl },
+      } = await supabase.storage//supabase storageから画像の公開URL(public URL)を取得し、表示に使う。
+        .from("post-thumbnail")
+        .getPublicUrl(post.thumbnailImageKey);
+
+      setThumbnailImageUrl(publicUrl);
     };
 
     fetcher();
-  }, [id]);
-
-  if (loading) return<div>読み込み中...</div>
-  if (!post) return<div>記事が見つかりません</div>
-
-
+  }, [post?.thumbnailImageKey]); //画像キーが変わったら実行
+  //条件付き表示のロジック
+  //ローディング中の処理　
+  if (isLoading) {
+    return <div>読み込み中…</div>;
+  }
+  // postが見つからなかった場合の処理
+  if (!post) {
+    return <div>記事はありません</div>;
+  }
   return (
-    <div className={classes.Container}>
-      <div className={classes.post}>
-        <div className={classes.postImage}>
-          <Image
-            src={post.thumbnail.url}
+    <div>
+      <div className="flex items-center justify-center">
+        {/*JSX表示(実データを使って表示)*/}
+        {/*supabaseの画像を表示*/}
+        {thumbnailImageUrl && (
+          <Image //<img>タグをnext/imageのImageコンポーネントに置き換え修正
             alt={post.title}
+            className="mt-12"
+            src={thumbnailImageUrl}
             height={400}
             width={800}
           />
-        </div>
-        <div className={classes.postContent}>
-          <div className={classes.postInfo}>
-            <div className={classes.postDate}>
-              {new Date(post.createdAt).toLocaleDateString()}
-            </div>
-            <div className={classes.postCategories}>
-              {post.categories.map((category) => {
-                return (
-                  <div key={category.id} className={classes.postCategory}>
-                    {category.name}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-          <div className={classes.postTitle}>{post.title}</div>
-          <div className={classes.postBody} dangerouslySetInnerHTML={{__html: post.content}}/>
-        </div>
+        )}
       </div>
+      <ArticlesCardDetail post={post} className="border-none" />{/*ArticlesCardDetailコンポーネントにpostを渡して記事の中身を表示*/}
     </div>
   );
 };
-
-export default HomeDetail;
+export default PageDetail;
