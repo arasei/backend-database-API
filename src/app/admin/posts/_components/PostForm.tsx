@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { createPost } from "../new/page";
 
 // 全体の概要
-// 記事投稿フォームを提供するReactコンポーネントで、入力されたデータ（タイトル・本文・サムネイルURL・カテゴリー）をAPI経由でサーバーに送信して、新規記事を作成する。カテゴリー一覧は初回レンダリング時にAPIから取得してセレクトボックスに表示する。
+// 記事投稿フォームを提供するReactコンポーネント。
+// ユーザーによって入力されたデータ（タイトル・本文・サムネイルURL・カテゴリー）をAPI経由でサーバーに送信して、新規記事を作成する。
+// カテゴリー一覧は初回レンダリング時にAPIから取得してセレクトボックスに表示する。
 
 //APIから取得するデータの型定義
 type Category = {
@@ -18,12 +20,12 @@ const PostForm: React.FC = () => {
   const [ content,setContent ] = useState<string>("");//本文を管理
   const [ thumbnailUrl,setThumbnailUrl ] = useState("");//サムネイルを管理
   const [ categories,setCategories ] = useState<Category[]>([]);//カテゴリー一覧を(配列)で管理
-  const [ selectedCategory,setSelectedCategory ] = useState<number | null>(null)//選んだカテゴリー
+  const [ selectedCategories,setSelectedCategories ] = useState<number[]>([]);//選択状態を保持
   //カテゴリー一覧をAPIから取得(初回レンダリング時のみ実行)
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("/api/admin/categories");//セレクトボックスに表示するため
+        const res = await fetch("/api/admin/categories");//セレクトボックスに表示するため、初回レンダリング時に/api/admin/categoriesへGETリクエストを送り、カテゴリー一覧を取得してcategoriesにセット。
         const data = await res.json();
         setCategories(data.categories);//categories配列をセットする
       } catch (error) {
@@ -36,9 +38,10 @@ const PostForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     //フォーム送信時に動く関数
+    //未選択チェック → createPost関数にデータ送信 → 成功時にアラートとフォーム初期化。
     e.preventDefault();//フォーム送信時のリロードを防ぐ役割
     try {
-      if (selectedCategory === null) {
+      if (setSelectedCategories.length === 0) {
         alert("カテゴリーを選択してください。");
         return;
       }
@@ -47,7 +50,7 @@ const PostForm: React.FC = () => {
         title,
         content,
         thumbnailUrl,
-        categories: [{ id: selectedCategory }],//投稿する時は配列で渡す
+        categories: selectedCategories.map((id) => ({ id })),//複数対応
       });
       alert("投稿に成功しました。");
 
@@ -55,7 +58,7 @@ const PostForm: React.FC = () => {
       setTitle("");
       setContent("");
       setThumbnailUrl("");
-      setSelectedCategory(null);
+      setSelectedCategories([]);//複数選択を初期化する
     } catch (error) {
       //エラーの場合
       console.log(error);//エラーの内容をコンソールに表示
@@ -70,7 +73,7 @@ const PostForm: React.FC = () => {
       <label>タイトル</label>
       <input
         type="text"
-        {/*valueに状態titleをバインドし入力が変更されるとsetTitleが呼ばれる*/}
+        //valueに状態titleをバインドし入力が変更されるとsetTitleが呼ばれる
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         className="border border-stone-300 rounded-lg p-3 w-full"
@@ -93,14 +96,16 @@ const PostForm: React.FC = () => {
 
       <label>カテゴリー</label>
       <select
-        value={selectedCategory !== null ? String(selectedCategory) : ""}//選択中のカテゴリーIDをセット(String配列として)
+        multiple//複数選択可能にする
+        value={selectedCategories.map(String)}
         //selectの選択が変わるとonChange関数を呼び出す
         onChange={(e) => {
-          setSelectedCategory(Number(e.target.value));
+          //onChangeで選択された<option>から値を取り出し、数値の配列に変換してselectedCategoriesに反映。
+          const selected = Array.from(e.target.selectedOptions,(option) => Number(option.value));
+          setSelectedCategories(selected);
         }}
         className="border border-stone-300 rounded-lg p-3 w-full"
       >
-        <option value=""></option>
         {/*<option value=""></option>*/}
         {/*最初は空白の選択肢。選択解除用*/}
         {/*空の選択肢を１つ入れることで「未選択の状態」や「選択解除」を可能にする*/}
