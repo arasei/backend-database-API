@@ -24,11 +24,12 @@ const Posts: React.FC = () => {
   useEffect(() => {
     const getApi = async () => {
       const res = await fetch("/api/posts");//作成したAPIを呼び出し、記事データを取得、記事一覧を取得する為のエンドポイント
-      const { data } = await res.json();//dataの配列をオブジェクトとして取り出す
+      const data = await res.json();//dataの配列をオブジェクトとして取り出す
       console.log(posts);
       //postCategories(中間テーブル)からcategoryを抽出し、categoriesプロパティに変換
       //data.postsはAPIから返ってきた記事の一覧配列
-      const transformedPosts = data.posts.map((post: any) => ({
+      //APIレスポンスが想定外で posts が undefined の場合に .map() を安全に実行するため(data.posts ?? [])にする。
+      const transformedPosts = (data.posts ?? []).map((post: any) => ({
         ...post,
         categories: post.postCategories.map((pc: any) => pc.category),
       }));
