@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
+//全体の概要
+// このコンポーネントは、Supabase の認証トークンを使ってログイン中の管理者だけがアクセスできる記事一覧ページを表示し、
+// 記事ごとにリンク付きで詳細ページに飛べるようにする管理画面機能です。
+
 type Category = {
   id: number;
   name: string;

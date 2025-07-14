@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
+//全体の概要
+//このコードは、認証トークンを使って管理者だけがアクセスできるカテゴリー一覧をAPIから取得し、
+// 一覧表示と編集ページへのリンクを提供するNext.jsの管理画面用クライアントコンポーネントです。
+
+
 type Category = {
   id: number;
   name: string;

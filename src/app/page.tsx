@@ -23,7 +23,7 @@ const Posts: React.FC = () => {
   //初回レンダリング時の処理を記述
   useEffect(() => {
     const getApi = async () => {
-      const res = await fetch("/api/admin/posts");//作成したAPIを呼び出し、記事データを取得、記事一覧を取得する為のエンドポイント
+      const res = await fetch("/api/posts");//作成したAPIを呼び出し、記事データを取得、記事一覧を取得する為のエンドポイント
       const { data } = await res.json();//dataの配列をオブジェクトとして取り出す
       console.log(posts);
       //postCategories(中間テーブル)からcategoryを抽出し、categoriesプロパティに変換
