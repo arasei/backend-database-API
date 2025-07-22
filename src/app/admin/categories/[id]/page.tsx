@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import React from "react";
+import { CategoryForm } from "../../posts/_components/CategoryForm"
 
 //全体の概要
 //このコードは、特定のカテゴリーの情報をAPIから取得し、
@@ -37,8 +37,7 @@ const EditCategoryPage: React.FC = () => {
 
   //編集処理(PUT)
   //フォーム送信時にPUTリクエストを送り、成功すれば一覧画面へ遷移。
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();//ページリロード防止
+  const handleUpdate = async (name: string) => {
     //バリデーションを追加（name.trim() が空でも送信できてしまうのを防ぐため）。
     if(!name.trim()) {
       alert("カテゴリー名を入力してください");
@@ -88,34 +87,18 @@ const EditCategoryPage: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleUpdate} className="space-y-4 p-4">
+    <div className="space-y-4 p-4">
       <h1 className="text-lg font-bold mb-4">
         カテゴリー編集
       </h1>
-      <label htmlFor="name">カテゴリー名</label>
-      <input
-        id="name"
-        type="text"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="border border-stone-300 rounded-lg p-3 w-full"
-      ></input>
-      <div>
-        <button
-          type="submit"
-          className="py-2 px-4 border block rounded-lg text-white bg-blue-700"
-        >
-          更新
-        </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="py-2 px-4 border block rounded-lg text-white bg-red-600"
-        >
-          削除
-        </button>
-      </div>
-    </form>
+
+      <CategoryForm
+        onSubmit={handleUpdate}
+        onDelete={handleDelete}
+        defaultValue={name}
+        submitLabel="更新"
+      />
+    </div>
   );
 };
 
