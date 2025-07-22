@@ -9,7 +9,7 @@ import { useState } from "react";
 
 //カテゴリー新規作成フォームコンポーネント
 //カテゴリー名(name)を入力し、POSTリクエストで/api/admin/categoriesに送信
-export const CategoryForm = () => {
+export const CategoryForm: React.FC = () => {
   const [name, setName] = useState("");//ユーザーが入力したカテゴリー名を保存(初期値は空文字)(setNameで入力されたカテゴリー名を更新をする)
   const handleSubmit = async (e: React.FormEvent) => {
     //フォームが送信された時に動く関数

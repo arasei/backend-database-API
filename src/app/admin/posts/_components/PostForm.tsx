@@ -14,13 +14,13 @@ type Category = {
   name: string;
 };
 
-const PostForm: React.FC = () => {
+export const PostForm: React.FC = () => {
   //title,content,thumbnailUrl,の状態を管理(初期値は空)
   const [ title,setTitle ] = useState<string>("");//titleを管理
   const [ content,setContent ] = useState<string>("");//本文を管理
   const [ thumbnailUrl,setThumbnailUrl ] = useState("");//サムネイルを管理
   const [ categories,setCategories ] = useState<Category[]>([]);//カテゴリー一覧を(配列)で管理
-  const [ selectedCategories,setSelectedCategories ] = useState<number[]>([]);//選択状態を保持
+  const [ selectedCategories,setSelectedCategories ] = useState<number[]>([]);//選ばれたカテゴリーIDたち　選択状態を保持(新規作成で送信する為の用途)
   //カテゴリー一覧をAPIから取得(初回レンダリング時のみ実行)
   useEffect(() => {
     const fetchCategories = async () => {
@@ -129,5 +129,3 @@ const PostForm: React.FC = () => {
     </form>
   );
 };
-
-export default PostForm;
