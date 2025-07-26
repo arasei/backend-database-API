@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 //全体の概要
 // このコンポーネントは、Supabase の認証トークンを使ってログイン中の管理者だけがアクセスできる記事一覧ページを表示し、
@@ -23,36 +22,22 @@ type Post = {
 };
 
 //記事一覧ページ
-const AdminPostPage = () => {
+const AdminPostPage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);//初期値は空配列に。空配列なら.map()が正常に動作し何も表示されないだけで済むため安全。
-  const { token } = useSupabaseSession();//認証トークンを取得
-
-  //useEffectの処理は、初回or token変更時に行う
-  //管理者(ログイン済ユーザー)だけに記事を表示したいのでtokenを使用
-  //useEffectを使用することで、tokenが取得できた時点で初めてAPIを呼び実行できる
-  //最初のレンダリングでは token は undefined か null の場合がある為
   useEffect(() => {
-    if (!token) return;//トークンがなければAPI呼び出ししない。もしトークンがなければreturn;で処理を中断。
-
     const fetchPosts = async () => {
       try {
-        //トークンがある時だけfetch("/api/admin/posts")が実行する。
-        const res = await fetch("/api/admin/posts", {
-          headers: {
-            "Content-Type": "application/json",
-            //下記の行により、APIは「正しいトークンを持ったユーザーだけ」に記事一覧を返すように制限できる。
-            Authorization: token,//トークンをヘッダーに付与する。正しいトークンを
-          },
-        });
+        const res = await fetch("/api/admin/posts");
         const data = await res.json();
-        setPosts(data.posts);//結果をステートに保存
+        setPosts(data.posts);
       } catch (error) {
-        console.error("記事取得エラー",error);
+        console.error("記事取得エラー", error);
       }
     };
     fetchPosts();
-  }, [token]);//トークンが準備できたらfetchを実行
+  }, []);
 
+  
   return (
     <div className="space-y-4 p-4">
       <div className="flex justify-between items-center mb-9 mt-2">
