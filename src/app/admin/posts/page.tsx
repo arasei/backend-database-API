@@ -27,17 +27,23 @@ const AdminPostPage: React.FC = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await fetch("/api/admin/posts");
+        const res = await fetch("/api/admin/posts");//fetch 関数で /api/admin/posts というエンドポイントに GET リクエストを送信。
         const data = await res.json();
-        setPosts(data.posts);
+        console.log("APIレスポンス:", data);//デバック用の出力
+        //data.posts が配列かどうかを Array.isArray() で確認。
+        //配列であればそのまま posts にセット。
+        //配列でなければ、空配列 [] をセットして安全に処理を継続。
+        //安全対策：API が不正な形式でも .map() でエラーを起こさないようにしている。
+        setPosts(Array.isArray(data.posts) ? data.posts : []);
       } catch (error) {
         console.error("記事取得エラー", error);
+        setPosts([]);//念の為catchでもposts を空配列にして、表示側で .map() してもエラーにならないようにする。
       }
     };
     fetchPosts();
   }, []);
 
-  
+
   return (
     <div className="space-y-4 p-4">
       <div className="flex justify-between items-center mb-9 mt-2">
@@ -51,7 +57,7 @@ const AdminPostPage: React.FC = () => {
       </div>
       <div>
         {/*記事が1件以上ある場合の表示*/}
-        {posts.length ? (
+        {Array.isArray(posts) && posts.length > 0 ?(
           posts.map((post) => (
             //各記事を順番に表示
             <div key={post.id}>
