@@ -26,6 +26,7 @@ export const PostForm: React.FC = () => {
     const fetchCategories = async () => {
       try {
         const res = await fetch("/api/admin/categories");//セレクトボックスに表示するため、初回レンダリング時に/api/admin/categoriesへGETリクエストを送り、カテゴリー一覧を取得してcategoriesにセット。
+        if (!res.ok) throw new Error("カテゴリー取得失敗");
         const data = await res.json();
         setCategories(data.categories);//categories配列をセットする
       } catch (error) {
@@ -41,7 +42,7 @@ export const PostForm: React.FC = () => {
     //未選択チェック → createPost関数にデータ送信 → 成功時にアラートとフォーム初期化。
     e.preventDefault();//フォーム送信時のリロードを防ぐ役割
     try {
-      if (setSelectedCategories.length === 0) {
+      if (selectedCategories.length === 0) {
         alert("カテゴリーを選択してください。");
         return;
       }
@@ -110,16 +111,17 @@ export const PostForm: React.FC = () => {
         {/*最初は空白の選択肢。選択解除用*/}
         {/*空の選択肢を１つ入れることで「未選択の状態」や「選択解除」を可能にする*/}
 
-        
-        {categories.map((category) => {
-          //カテゴリー一覧データを元にcategoriesをループして<option>を自動で作成
-          return(
-            <option key={category.id} value={category.id}>
-              {category.name || "(名義なし)"}{""}
-              {/*category.nameがあればそれを表示、なければ"(名前なし)"を表示*/}
-            </option>
-          );
-        })}
+        {/*ドロップダウンメニューの初期表示（デフォルト選択）です。*/}
+        {/*value="" としておくことで、「選択されていない状態」にする。*/}
+        <option value="">-- 選択してください --</option>
+        {/*エラー回避の為、Array.isArray(categories) は、「categories が配列であるか」をチェックしています。*/}
+        {/*categories.map(...) では、各カテゴリー（例: React, TypeScriptなど）を順に処理し、<option> 要素に変換しています。*/}
+        {/*category はそのループ内での一つ一つのカテゴリーオブジェクト。*/}
+        {Array.isArray(categories) && categories.map((category) => (
+          <option key={category.id} value={category.id}>{/*value={category.id} により、そのidが選択肢の値として扱う。*/}
+            {category.name || "(名義なし)"}
+          </option>
+        ))}
       </select>
       <button
         type="submit"
