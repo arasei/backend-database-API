@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 //全体の概要
-//このコードは、認証トークンを使って管理者だけがアクセスできるカテゴリー一覧をAPIから取得し、
-// 一覧表示と編集ページへのリンクを提供するNext.jsの管理画面用クライアントコンポーネントです。
-
+//管理者専用のカテゴリー一覧ページを実装し、APIから取得したカテゴリーを一覧表示し、
+// それぞれの編集ページへのリンクを提供するNext.jsのクライアントコンポーネント
 
 type Category = {
   id: number;
@@ -15,18 +13,12 @@ type Category = {
 };
 //カテゴリー一覧ページ
 const AdminCategoriesPage: React.FC = () => {
-  const [categories, setCategories] = useState<Category[]>();//初期値はundefined(まだデータがない状態)
-  const { token } = useSupabaseSession();
+  const [categories, setCategories] = useState<Category[]>([]);//Category型の配列でstateを管理する、初期値は空配列
   //初回レンダリング時にtokenの値が取得された時(ログイン完了など)fetchCategoriesが実行されAPIからカテゴリー一覧を取得
   useEffect(() => {
-    if (!token) return;//トークンが取得できていない状態ではAPIを呼び出さない
     const fetchCategories = async () => {
       try {
-        const res = await fetch("/api/admin/categories", {
-          headers: {
-            Authorization: `Bearer ${token}`,//Bearerは「トークンで認証するよ」という合図
-          },
-        });
+        const res = await fetch("/api/admin/categories");// /api/admin/categoriesにGETリクエストを送信し、カテゴリー一覧データを取得
         const data = await res.json();
         setCategories(data.categories);//データが取得されたらsetCategories(data.categories)で更新
       } catch (error) {
@@ -34,7 +26,7 @@ const AdminCategoriesPage: React.FC = () => {
       }
     };
     fetchCategories();
-  }, [token]);
+  }, []);//依存配列が空なので初回レンダリング時のみ実行
 
   return (
     <div className="space-y-4 p-4">
@@ -49,18 +41,21 @@ const AdminCategoriesPage: React.FC = () => {
       </div>
       {/* カテゴリーが1件以上ある場合の表示 */}
       <div>
-        {categories?.length ? (
+        {Array.isArray(categories) && categories.length > 0 ? (
+          //カテゴリー一覧配列をmapで1件ずつ繰り返し処理
           categories.map((category) => (
-            //各カテゴリーを順に表示
-            <Link href={`/admin/categories/${category.id}`}>
-              <div key={category.id} className="border-b border-gray-300 py-4">
-                <h2 className="font-black">{category.name}</h2>
-              </div>
+            //各カテゴリー名を表示し、クリックするとそのカテゴリー編集ページ(/admin/categories/{id})へ遷移するリンク
+            <Link
+              key={category.id}
+              href={`/admin/categories/${category.id}`}
+              className="block border-b border-gray-300 py-4"
+            >
+              <h2 className="font-black">{category.name}</h2>
             </Link>
           ))
         ) : (
-          //カテゴリーがない場合の表示
-          <p>カテゴリーがありません。</p>
+          //カテゴリーが1件もない場合は「カテゴリーがありません」と表示
+          <p>カテゴリーがありません</p>
         )}
       </div>
     </div>
