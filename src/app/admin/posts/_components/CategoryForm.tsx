@@ -12,6 +12,7 @@ type Props = {
   onDelete?: () => void; //削除ボタンによる削除処理。任意(何も返さない、編集ページでのみ使う)
   defaultValue?: string; //編集時などに初期表示するカテゴリー名。初期の入力値（空文字や既存のカテゴリー名)
   submitLabel: string; //ボタンに表示するテキスト(作成、更新など)
+  disabled?:boolean;
 };
 
 //カテゴリー新規作成、編集　共通コンポーネント
@@ -20,6 +21,7 @@ export const CategoryForm: React.FC<Props> = ({
   onDelete,
   defaultValue = "", //propsがなかった時(defaultValueが未指定のとき)に空文字を使うため = ""とする。
   submitLabel,
+  disabled=false,//デフォルトはfalse
 }) => {
   const [name, setName] = useState(defaultValue); //カテゴリー名の入力欄の値を保持
   useEffect(() => {
@@ -46,12 +48,14 @@ export const CategoryForm: React.FC<Props> = ({
         value={name}
         onChange={(e) => setName(e.target.value)}
         className="border border-stone-300 rounded-lg p-3 w-full mb-4"
+        disabled={disabled}
       ></input>
       {/*submitLabelに応じて表示内容(作成・更新)を切り替え*/}
       <div className="flex gap-4">
         <button
           type="submit"
           className="py-2 px-4 border block rounded-lg  text-white bg-blue-700"
+          disabled={disabled}
         >
           {submitLabel}
         </button>
@@ -61,6 +65,7 @@ export const CategoryForm: React.FC<Props> = ({
             type="button"
             onClick={onDelete}
             className="py-2 px-4 border block rounded-lg  text-white bg-red-600"
+            disabled={disabled}
           >削除</button>
         )}
       </div>

@@ -12,12 +12,12 @@ import { CategoryForm } from "../../posts/_components/CategoryForm"
 
 //カテゴリー編集(更新、削除)ページ
 const EditCategoryPage: React.FC = () => {
-  const params = useParams();
   //useParams() は string | undefined を返す可能性があるため、明示的なキャスト(as構文　例:as string)を記述
   //ルートのIDを取得(例:/admin/categories/3の「3」を取得)(カテゴリーIDを取得、idはAPIへのリクエストに使用)
   const  id  = useParams().id as string;
   const router = useRouter();//ページ遷移を制御する為のフック。更新・削除後に/admin/categoriesへリダイレクトするのに使用。
   const [name, setName] = useState("");//初期値は空
+  const [isLoading, setIsLoading] = useState(false);
 
   //カテゴリー名をAPIから取得(初回のみ)
   useEffect(() => {
@@ -38,6 +38,7 @@ const EditCategoryPage: React.FC = () => {
   //編集処理(PUT)
   //フォーム送信時にPUTリクエストを送り、成功すれば一覧画面へ遷移。
   const handleUpdate = async (name: string) => {
+    setIsLoading(true);//開始時にtrue
     //バリデーションを追加（name.trim() が空でも送信できてしまうのを防ぐため）。
     if(!name.trim()) {
       alert("カテゴリー名を入力してください");
@@ -51,6 +52,7 @@ const EditCategoryPage: React.FC = () => {
       body: JSON.stringify({ name }),
       });
 
+      setIsLoading(false);//完了後にfalse
       if (!res.ok) {
         alert("カテゴリーを更新しました");
         router.push("/admin/categories");//指定したURL(ここではカテゴリー一覧)に画面遷移する為の関数
@@ -67,11 +69,12 @@ const EditCategoryPage: React.FC = () => {
   const handleDelete = async () => {
     const ok = confirm("本当に削除してもよろしいですか？");//ユーザーに確認ポップアップを出す
     if (!ok) return;//okでない場合(キャンセルされたら=falseされたら)その時点で関数の処理を終了する(何もしない)
+    setIsLoading(true);
     try {
       const res = await fetch(`/api/admin/categories/${id}`,{
         method: "DELETE",
       });
-      
+      setIsLoading(false);
       //カテゴリー削除に成功時にはカテゴリー一覧画面に移動
       if(res.ok) {
         alert("カテゴリーを削除しました");
@@ -97,6 +100,7 @@ const EditCategoryPage: React.FC = () => {
         onDelete={handleDelete}
         defaultValue={name}
         submitLabel="更新"
+        disabled={isLoading}
       />
     </div>
   );
