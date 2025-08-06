@@ -1,39 +1,68 @@
-"use client"
+"use client";
 
-import { CreatePost } from "@/app/_types/Post";
-import PostForm from "../_components/PostForm";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { PostForm } from "../_components/PostForm";//共通フォームコンポーネントをインポート。新規作成・編集で再利用。
+import { CreatePost } from "@/app/_types/Post";//投稿データの型定義(CreatePost)をインポート。型安全にデータを扱うため。
 
-//管理者用の記事投稿ページ
-//全体の概要
-//管理者用の記事作成ページで、フォーム入力内容（タイトル・本文・サムネイルURL・カテゴリー）をAPI経由で送信し、Prisma ORMを使って記事データをデータベースに保存する処理
+//管理者が新規記事を作成するページで、フォーム入力内容をAPI経由で送信し、
+//投稿完了後に記事一覧ページへ遷移するコンポーネント
 
-// 管理者_記事の新規作成リクエスト。データをバックエンドのAPIに送信するための関数。役割→「投稿すること」だけ
-export const createPost = async (postData: CreatePost) => {
-  try {
-    const { title, content, thumbnailUrl, categories } = postData; //postdataから必要なデータを分割代入で取得
-    //投稿API(バックエンド)にHTTP POSTリクエストを送信
-    //エンドポイント/api/admin/postsは記事作成API。
-    const res = await fetch("/api/admin/posts", {
-      // 第2引数はHTTPリクエストを送信するための関数
-      //POSTメソッドを指定し、ヘッダーに "Content-Type": "application/json" を表示。
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, thumbnailUrl, categories }), //必要なデータだけ送る
-    });
-    if (!res.ok) {
-      throw new Error("投稿に失敗しました");
-    } //リクエストが失敗した場合
-    //APIから返された投稿データをCreatePost型で受け取り返却。
-    const data: CreatePost = await res.json(); //レスポンスの JSON を JavaScript オブジェクトに変換
-    return data; //作成されたデータを返す
-  } catch (error) {
-    console.error("投稿エラー",error); 
-  }
-};
-
-// // NewPostPage関数でPostFormコンポーネントだけを返す
 const NewPostPage = () => {
-  return <PostForm />;
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);//送信中状態を管理
+
+  // 新規作成時の送信処理
+  //投稿データ送信処理(POSTリクエスト)関数。
+  //PostFormから渡ってくるデータを受け取る。
+  const handleCreate = async (data: CreatePost) => {
+    if (isSubmitting) return; //2重送信防止
+
+    setIsSubmitting(true);//送信開始→ボタンdisabledにする。
+
+    try {
+      //APIエンドポイントにPOSTリクエスト送信。
+      // 投稿データをバックエンドに送る。
+      const res = await fetch("/api/admin/posts", {
+        //POSTメソッドでJSON形式のデータ送信を指定。
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) throw new Error("投稿に失敗しました");
+
+      alert("投稿が完了しました");
+      //投稿完了後に記事一覧ページへリダイレクト。
+      router.push("/admin/posts");
+    } catch (error) {
+      console.error(error);
+      alert("投稿に失敗しました");
+    } finally {
+      setIsSubmitting(false);//送信完了→ボタン復活
+    }
+  };
+
+  // 新規作成時の初期データ
+  //フォームに渡す初期データを宣言。全て空状態で新規作成用
+  const initialData: CreatePost = {
+    title: "",
+    content: "",
+    thumbnailUrl: "",
+    categories: [], // カテゴリーは空配列
+  };
+
+  //再利用可能なPostFormコンポーネントを呼び出し、
+  // 必要なプロパティ（初期データ・送信処理・ボタンラベル）を渡す。
+  return (
+    <PostForm
+      initialData={initialData}  // 空の初期データを渡す
+      onSubmit={handleCreate}     // 作成処理を渡す
+      //ボタンのラベル
+      submitLabel={isSubmitting ? "投稿中.." : "作成"}   // ボタンのラベルを変える
+      isSubmitting={isSubmitting}//送信中状態を渡す。
+    />
+  );
 };
 
 export default NewPostPage;

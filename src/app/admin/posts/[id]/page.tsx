@@ -2,186 +2,113 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { PostForm } from "../_components/PostForm";
+import { Post, CreatePost } from "@/app/_types/Post";
 
 
 //全体の概要
-//管理画面で特定の記事の内容と関連カテゴリーを編集・削除できるページを実装
-//フォームから記事情報を取得・更新・削除し、複数のカテゴリーをチェックボックスで選択可能にしています。
+//管理者が特定の記事の内容を取得し、フォームで編集・削除できるページを実装したコード
 
-//カテゴリーデータの型定義（IDと名前）。
-type Category = {
-  id: number;
-  name: string;
-};
-
-//記事データの型。postCategoriesは中間テーブル形式でカテゴリーを含む。
-type Post = {
-  title: string;
-  content: string;
-  thumbnailUrl: string;
-  postCategories: {
-    category: Category;
-  }[];
-};
-
-//記事編集(更新、削除)ページ
 const EditPostPage = () => {
-  //URLから記事IDを取得し、ルーターで画面遷移を制御。
-  const { id } = useParams();
-  const router = useRouter();
-  
-  //各フォーム項目と、選択されたカテゴリID・全カテゴリ一覧のstateを初期化。
-  const [title, setTitle] = useState("");//titleを管理
-  const [content, setContent] = useState("");//本文を管理
-  const [thumbnailUrl, setThumbnailUrl] = useState("");//サムネイルを管理
-  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);//カテゴリーIDだけを保持
-  const [allCategories, setAllCategories] = useState<Category[]>([]);//カテゴリー一覧全部の情報を保持する役割（UI上にボタン表示するための用途）
+  const { id } = useParams();//URLから記事のIDを取得。動的ルートのパラメータを扱う
+  const router = useRouter();//ページ遷移を制御するためのルーターオブジェクトを取得。
 
-  //初回レンダリング時にuseEffect内を実行(初期データ取得)
+  //編集フォームに初期表示する記事データをstateで管理。初期値はnull（未取得状態）
+  const [initialData, setInitialData] = useState<CreatePost | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); //送信中状態を管理
+
+  // 記事データとカテゴリ一覧を取得
   useEffect(() => {
-    if (!id) return;//idが存在しない場合は処理を中断（URLにIDがないときの安全策）
-    //記事の詳細をAPIから取得して、フォームに初期値として反映。
+    //非同期で記事データをAPIから取得する関数
     const fetchData = async () => {
-      try {
-        //複数の非同期リクエストを同時に実行（記事とカテゴリー一覧）。
-        const [postRes, categoryRes] = await Promise.all([
-          fetch(`/api/admin/posts/${id}`),
-          fetch(`/api/admin/categories`)
-        ]);
-        const postData = await postRes.json();
-        const categoryData = await categoryRes.json();
+      //記事IDをもとに記事詳細データをAPIから取得。
+      const res = await fetch(`/api/admin/posts/${id}`);
+      //APIレスポンスをJSONに変換し、postプロパティを含むことを型で示す。
+      const data: { post: Post } = await res.json();
+      //取得した記事情報を変数に格納。
+      const post = data.post;
 
-        const post: Post = postData.post;
-        //記事情報とカテゴリ一覧をステートにセット。
-        setTitle(post.title);
-        setContent(post.content);
-        setThumbnailUrl(post.thumbnailUrl);
-        //postCategories.map(...)で、関連付けられたカテゴリのIDのみ抽出して選択状態に反映(選択済みリストに)。
-        setSelectedCategories(post.postCategories.map((pc) => pc.category.id));
-        setAllCategories(categoryData.categories);
-      } catch (error) {
-        console.error("データ取得エラー", error);
-      }
+      //取得した記事の情報を、CreatePost型に合う形でセットし、フォームの初期値として登録。
+      setInitialData({
+        title: post.title,
+        content: post.content,
+        thumbnailUrl: post.thumbnailUrl,
+        categories: post.postCategories.map((pc) => ({ id: pc.category.id })),
+      });
     };
 
-    fetchData();
-  }, [id]);//エラー時のログ出力と、id変更時に再取得するようにしています。
+    fetchData();//先ほどのfetchData関数を実行
+  }, [id]);//idが変わるたびにfetchDataを再実行
 
-  //編集処理(PUT)
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();//フォーム送信時のページリロードを防ぐ。
+  // 更新処理（PUT）
+  //編集フォームから送信された更新データを受け取り、APIにPUTリクエストを送る関数
+  const handleUpdate = async (data: CreatePost) => {
+    if (isSubmitting) return;//2重送信防止
+    setIsSubmitting(true);    // 送信開始
 
-    //APIに記事情報を送信。
-    const res = await fetch(`/api/admin/posts/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        title,
-        content,
-        thumbnailUrl,
-        categories: selectedCategories.map((id) => ({ id }))//categoriesは{ id: number }の形式で送信(APIに合わせてオブジェクト形式に)
-      })
-    });
-
-    if (res.ok) {
-      alert("更新しました。");
+    try {
+      //編集内容をPUTリクエストでサーバーに送信。
+      const res = await fetch(`/api/admin/posts/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      //HTTPステータスが成功でなければエラーを投げる。
+      if (!res.ok) throw new Error("更新失敗");
+      //成功したらユーザーに通知
+      alert("更新しました");
+      //編集一覧ページへ遷移
       router.push("/admin/posts");
-    } else {
-      alert("更新に失敗しました。");
+    } catch (error) {
+      console.error(error);//エラー発生時の処理
+      alert("更新に失敗しました");
+    } finally {
+      setIsSubmitting(false);//送信完了
     }
   };
 
-
-  //削除処理（DELETE）
+  // 削除処理（DELETE）
+  //記事削除処理用関数
   const handleDelete = async () => {
-    const ok = confirm("本当に削除しますか？");//ユーザーに削除確認ポップアップを出す
-    if (!ok) return;//OKじゃなかったら（キャンセルされたら＝falseされたら）そこで関数の処理を終了する（何もしない）
+    //削除確認のダイアログ表示
+    const ok = confirm("本当に削除しますか？");
+    if (!ok) return;//ユーザーがキャンセルした場合中断
+    if (isSubmitting) return; // 削除も連打防止
+    setIsSubmitting(true); // 削除時もボタン無効化
 
-    //記事を削除するリクエスト送信。
-    const res = await fetch(`/api/admin/posts/${id}`, {
-      method: "DELETE"
-    });
-
-    if (res.ok) {
-      alert("削除しました。");
-      router.push("/admin/posts");//削除後、新しいURLを履歴に追加してページ遷移する(前のページに戻れる)
-    } else {
-      alert("削除に失敗しました。");
+    try {
+      //DELETEメソッドで記事削除APIを呼ぶ。
+      const res = await fetch(`/api/admin/posts/${id}`, {
+        method: "DELETE",
+      });
+      //削除失敗時にエラーを投げる。
+      if (!res.ok) throw new Error("削除失敗");
+      //削除成功の通知。
+      alert("削除しました");
+      //削除後に記事一覧ページへ遷移。
+      router.push("/admin/posts");
+    } catch (error) {
+      console.error(error);//エラー表示とユーザー通知。
+      alert("削除に失敗しました");
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
-  //カテゴリー選択のトグル関数
-  //チェックボックスをクリックしたとき、選択状態をトグル（ON/OFF）します。
-  const toggleCategory = (categoryId: number) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
-    );
-  };
 
+  //データ取得中はローディング表示。
+  if (!initialData) {
+    return <p>読み込み中...</p>;
+  }
+
+  //初期データと操作関数を渡してフォームをレンダリング。
   return (
-    //フォーム送信でhandleSubmitが呼ばれる。
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
-      <h1 className="text-lg font-bold mb-4">記事編集</h1>
-
-      <label>タイトル</label>
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="border border-stone-300 rounded-lg p-3 w-full"
-      />
-
-      <label>内容</label>
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        className="border border-stone-300 rounded-lg p-3 w-full"
-      />
-
-      <label>サムネイルURL</label>
-      <input
-        type="text"
-        value={thumbnailUrl}
-        onChange={(e) => setThumbnailUrl(e.target.value)}
-        className="border border-stone-300 rounded-lg p-3 w-full"
-      />
-      
-      {/*チェックボックスで複数カテゴリーを選択可能。*/}
-      {/*toggleCategoryで選択状態を更新。*/}
-      <label>カテゴリー（複数選択可）</label>
-      <div className="space-y-2">
-        {allCategories.map((category) => (
-          <label key={category.id} className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={selectedCategories.includes(category.id)}
-              onChange={() => toggleCategory(category.id)}
-            />
-            <span>{category.name || "(名前なし)"}</span>{/* category.nameがあればそれを表示、なければ"(名前なし)"を表示 */}
-          </label>
-        ))}
-      </div>
-
-      <div className="flex space-x-4 pt-4">
-        <button
-          type="submit"
-          className="py-2 px-4 rounded-lg text-white bg-blue-700"
-        >
-          更新
-        </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          className="py-2 px-4 rounded-lg text-white bg-red-600"
-        >
-          削除
-        </button>
-      </div>
-    </form>
+    <PostForm
+      initialData={initialData} // 記事の初期データ
+      onSubmit={handleUpdate}    // 更新処理
+      onDelete={handleDelete}    // 削除処理
+      submitLabel={isSubmitting ? "更新中..." : "更新"} //ボタンラベル切り替え
+      isSubmitting={isSubmitting}//送信中状態渡す
+    />
   );
 };
 
