@@ -5,7 +5,9 @@ const prisma = new PrismaClient();
 
 //全体の概要
 //管理者用「記事の個別取得・更新・削除」API。
-// APIルートは /api/admin/posts/[id] に対応、GET・PUT・DELETE の3つのHTTPメソッドを処理
+//Next.js の API ルート /api/admin/posts/[id] に対応したもので、
+//指定された記事IDに基づく「記事の取得(GET)」「記事の更新(PUT)」「記事の削除(DELETE)」の3つのHTTPメソッドを処理し、
+//Prisma ORMを使ってデータベースのpostとその関連カテゴリー情報を操作する。
 
 
 // 管理者　個別記事取得API(GET)
@@ -16,6 +18,7 @@ export const GET = async (
 ) => {
   const { id } = params;
   try {
+    //パスパラメータから記事IDを取得し、postテーブルから該当記事を取得。
     const post = await prisma.post.findUnique({
       where: {
         id: parseInt(id),
@@ -54,6 +57,7 @@ interface UpdatePostRequestBody {
 
 // PUTという命名にすることで、PUTリクエストの時にこの関数が呼ばれる
 //管理者　記事更新API
+//更新時に送られるリクエストボディの型定義
 //記事の内容を更新し、カテゴリー関連も更新
 export const PUT = async (
   request: NextRequest,
@@ -82,12 +86,14 @@ export const PUT = async (
     });
 
     // 一旦、記事と関連するカテゴリーの中間テーブルのレコードを全て削除
+    //送信されたカテゴリーに合わせて再登録(多対多の関係)
     //postCategory.deleteManyで中間テーブルのリセット
     await prisma.postCategory.deleteMany({
       where: {
-        postId: parseInt(id),
+        postId: post.id,
       },
     });
+
 
     // 記事とカテゴリーの中間テーブルのレコードをDBに生成、再登録(多対多の再構築)
     // 本来複数同時生成には、createManyというメソッドがあるが、sqliteではcreateManyが使えないので、for文1つずつ実施して登録してる
