@@ -12,6 +12,9 @@ export interface BasePostPayload {
   categories: { id: number }[];
 }
 
+// 更新APIのリクエストボディ型（エイリアス）
+export type UpdatePostRequestBody = BasePostPayload;
+
 // サーバーから取得する投稿データ（取得用）
 export interface Post {
   id: number;
@@ -27,7 +30,8 @@ export interface Post {
 
 // 新規投稿（送信用）
 //BasePostPayload（共通の投稿データ型）をそのまま継承した新規投稿用の型
-export interface CreatePost extends BasePostPayload {}
+export type CreatePost = BasePostPayload;
+
 
 // 更新投稿（送信用）
 //BasePostPayload を継承しつつ、更新対象を識別するための id を必須追加した型

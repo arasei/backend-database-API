@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import type { UpdatePostRequestBody } from "@/app/_types/Post";
 
 const prisma = new PrismaClient();
 
@@ -46,14 +47,8 @@ export const GET = async (
   }
 };
 
-// 管理者 記事更新API
-// 記事の更新時に送られてくるリクエストのbodyの型
-interface UpdatePostRequestBody {
-  title: string;
-  content: string;
-  categories: { id: number }[];
-  thumbnailUrl: string;
-}
+
+
 
 // PUTという命名にすることで、PUTリクエストの時にこの関数が呼ばれる
 //管理者　記事更新API
@@ -63,10 +58,13 @@ export const PUT = async (
   request: NextRequest,
   { params }: { params: { id: string } } // ここでリクエストパラメータを受け取る
 ) => {
-  // paramsの中にidが入っているので、それを取り出す
-  const { id } = params;
+  // idの安全な数値化
+  const postId = Number(params.id);
+  if (!Number.isInteger(postId)) {
+    return NextResponse.json({ status: "Invalid id" }, { status: 400 });
+  }
 
-  // リクエストのbodyを取得
+  //Post.ts からimportした型でボディを受け取る
   const { title, content, categories, thumbnailUrl }: UpdatePostRequestBody =
     await request.json();
 
@@ -76,7 +74,7 @@ export const PUT = async (
     //post.updateで記事本体の更新
     const post = await prisma.post.update({
       where: {
-        id: parseInt(id),
+        id: postId
       },
       data: {
         title,
@@ -108,7 +106,7 @@ export const PUT = async (
     }
 
     // レスポンスを返す
-    return NextResponse.json({ status: "OK", post: post }, { status: 200 });
+    return NextResponse.json({ status: "OK", post }, { status: 200 });
   } catch (error) {
     if (error instanceof Error)
       return NextResponse.json({ status: error.message }, { status: 400 });
