@@ -1,175 +1,181 @@
-'use client';
+"use client";
 
-import React, { useState, ChangeEvent, FormEvent } from "react";
-import classes from '@/app/contact/Contact.module.css';
+import { useState } from "react";
 
-// フォームデータの型
 type FormData = {
   name: string;
   email: string;
   message: string;
 };
 
-// バリデーションエラーの型
-type Errors = Partial<FormData>;
+type Errors = {
+  name?: string;
+  email?: string;
+  message?: string;
+};
 
-export default function Contact() {
+const ContactForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
     message: "",
   });
-
   const [errors, setErrors] = useState<Errors>({});
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // 入力値の変更を処理
-  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = event.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [id]: value,
-    }));
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const name = e.target.name;
+    const value = e.target.value;
+    setFormData({ ...formData, [name]: value });
   };
 
-  // バリデーション
-  const validate = (): boolean => {
-    const errorMessages: Errors = {};
-
+  const validate = (): Errors => {
+    const newErrors: Errors = {};
+    //名前：入力必須＆30文字以内
     if (!formData.name) {
-      errorMessages.name = "お名前は入力必須です。";
+      newErrors.name = "お名前は必須です。";
     } else if (formData.name.length > 30) {
-      errorMessages.name = "お名前は30文字以内で入力してください。";
+      newErrors.name = "お名前は30文字以内で入力してください。";
     }
-
-    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    //メールアドレス：入力必須＆メールアドレスの形式になっていること
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
     if (!formData.email) {
-      errorMessages.email = "メールアドレスは入力必須です。";
+      newErrors.email = "メールアドレスは必須です。";
     } else if (!emailRegex.test(formData.email)) {
-      errorMessages.email = "メールアドレスの形式が正しくありません。";
+      newErrors.email = "メールアドレスの形式が正しくありません。";
     }
 
+    //本文：入力必須 & 500字以内
     if (!formData.message) {
-      errorMessages.message = "本文は入力必須です。";
+      newErrors.message = "本文は必須です。";
     } else if (formData.message.length > 500) {
-      errorMessages.message = "本文は500字以内で入力してください。";
+      newErrors.message = "本文は500文字以内で入力してください。";
     }
-
-    setErrors(errorMessages);
-    return Object.keys(errorMessages).length === 0;
+    return newErrors;
   };
 
-  // フォーム送信処理
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validationErrors = validate();
 
-    if (!validate()) return;
-    setIsSubmitting(true);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
 
+    setErrors({});
+    setIsLoading(true);
     try {
-      const response = await fetch("https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/contacts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const response = await fetch(
+        "https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/contacts",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+      if (!response.ok) {
+        throw new Error("送信に失敗しました");
+      }
 
-      if (!response.ok) throw new Error("Network response was not ok");
-
-      alert("送信しました");
-      handleClear();
-      setErrors({});
+      alert("送信しました。");
+      setFormData({ name: "", email: "", message: "" });
     } catch (error) {
-      console.error("Error submitting form:", error);
+      if (error instanceof Error) alert(error.message);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  // 入力値のクリア処理
   const handleClear = () => {
-    setFormData({
-      name: "",
-      email: "",
-      message: "",
-    });
+    setFormData({ name: "", email: "", message: "" });
   };
-
   return (
-    <div className={classes.contactForm}>
-      <form onSubmit={handleSubmit}>
-        <h2 className={classes.title}>問い合わせフォーム</h2>
-        <div>
-
-          <div className={classes.formColumn}>
-            <label>
-              お名前
-            </label>
-            <div className={classes.formFormat}>
-              <input
-                type="text"
-                id="name"
-                maxLength={30}
-                value={formData.name}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-              {errors.name && <p className={classes.formError}>{errors.name}</p>}
-            </div>
-          </div>
-          
-
-          <div className={classes.formColumn}>
-            <label htmlFor="email">
-              メールアドレス
-            </label>
-            <div className={classes.formFormat}>
-              <input
-                type="email"
-                id="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
-              {errors.email && <p className={classes.formError}>{errors.email}</p>}
-            </div>
-          </div>
-
-          <div className={classes.formColumn}>
-            <label htmlFor={"message"}>
-              本文
-            </label>
-            <div className={classes.formFormat}>
-              <textarea
-                id="message"
-                maxLength={500}
-                value={formData.message}
-                onChange={handleChange}
-                disabled={isSubmitting}
-                rows={10}
-              />
-              {errors.message && <p className={classes.formError}>{errors.message}</p>}
-            </div>
-          </div>
-
-          <div className={classes.formBtn}>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={classes.submitBtn}
-            >
-              送信
-            </button>
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={isSubmitting}
-              className={classes.clearBtn}
-            >
-              クリア
-            </button>
-          </div>
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col  space-y-4 mx-auto w-[800px] max-w-[800px]"
+    >
+      <h1 className="text-lg font-bold mb-4 mt-6">問い合わせフォーム</h1>
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4 ">
+          <label htmlFor="name" className="  w-40 ">
+            お名前
+          </label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            onChange={handleChange}
+            value={formData.name}
+            disabled={isLoading}
+            className=" border border-stone-300 rounded-lg p-3 w-[600px] h-[60px]"
+          />
         </div>
-      </form>
-    </div>
+        {/* エラーメッセージ用コード */}
+        {errors.name && (
+          <p className="text-red-500 text-sm  ml-44 ">{errors.name}</p>
+        )}
+        <div className="flex items-center space-x-4">
+          <label htmlFor="email" className="  w-40">
+            メールアドレス
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            onChange={handleChange}
+            value={formData.email}
+            disabled={isLoading}
+            className=" border rounded-lg p-3 border-stone-300 w-[600px] h-[60px]"
+          />
+        </div>
+        {/* エラーメッセージ用コード */}
+        {errors.email && (
+          <p className="text-red-500 text-sm ml-44">{errors.email}</p>
+        )}
+        <div className="flex items-center space-x-4">
+          <label htmlFor="message" className=" w-40">
+            本文
+          </label>
+          <textarea
+            id="message"
+            name="message"
+            value={formData.message}
+            onChange={handleChange}
+            disabled={isLoading}
+            className=" border rounded-md p-3  border-stone-300 w-[600px] h-[250px]"
+          ></textarea>
+        </div>
+        {/* エラーメッセージ用コード */}
+        {errors.message && (
+          <p className="text-red-500 text-sm ml-44">{errors.message}</p>
+        )}
+
+        <div className="flex space-x-4 justify-center font-bold">
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="py-2 px-4 border block rounded-lg  text-white bg-gray-800"
+          >
+            送信
+          </button>
+
+          <button
+            type="reset"
+            onClick={handleClear}
+            disabled={isLoading}
+            className="py-2 px-4 border rounded-md bg-slate-200"
+          >
+            クリア
+          </button>
+        </div>
+      </div>
+    </form>
   );
 };
+export default ContactForm;
